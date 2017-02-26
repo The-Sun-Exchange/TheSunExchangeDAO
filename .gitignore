@@ -1,0 +1,14 @@
+.projectile
+*~
+bin/
+node_modules/
+typings/
+tmp/
+.tscache/
+app/*.js
+app/*.js.map
+dist/
+
+.baseDir.ts
+.node-xmlhttprequest-sync-*
+tscommand-*.tmp.txt

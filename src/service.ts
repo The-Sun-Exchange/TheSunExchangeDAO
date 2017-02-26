@@ -1,0 +1,87 @@
+import { Observer } from "rxjs/Observer";
+import { Observable } from "rxjs/Observable";
+import { SmartContractFactory } from "./smartContractFacade/smartContractFactory";
+import { BlockchainProxy } from "./smartContractFacade/blockchainProxy";
+import { SunExDao } from "./contracts/sunExDao";
+import { SunExProject } from "./contracts/sunExProject";
+import { ProjectListItem } from "./contracts/projectListItem";
+
+import { of } from "rxjs/observable/of";
+
+import "rxjs/Rx";
+
+export class Service {
+
+    constructor() {
+    }
+
+    public about(): Observable<string> {
+
+        return Observable.create((observer: Observer<string>) => {
+
+            observer.next("The Sun Exchange Blockchain Demo - copyright Jump Software");
+            observer.complete();
+
+        });
+    }
+
+    public createDao(): Observable<string> {
+        return SmartContractFactory.getContract("SunExDao", SunExDao)
+            .mergeMap((daoContract: SunExDao) => {
+                return BlockchainProxy.deployContract(daoContract);
+            })
+            .mergeMap((daoContract: SunExDao) => {
+                let address: string = daoContract.getAddress();
+                console.log("daoAddress in service:" + address);
+                return Observable.of(address);
+            });
+    }
+
+
+    public createProject(daoAddress: string, fundingTarget: number): Observable<string> {
+        console.log("service.createProject");
+        return SmartContractFactory.getContract("SunExDao", SunExDao)
+            .mergeMap((daoContract: SunExDao) => {
+                daoContract.setAddress(daoAddress);
+                return daoContract.createProject(fundingTarget);
+            })
+            .mergeMap((project: SunExProject) => {
+                return Observable.of(project.getAddress());
+            });
+    }
+
+    public getProjects(daoAddress: string): Observable<ProjectListItem[]> {
+        return SmartContractFactory.getContract("SunExDao", SunExDao)
+            .mergeMap((daoContract: SunExDao) => {
+                daoContract.setAddress(daoAddress);
+                return daoContract.getProjects();
+            })
+            .toArray();
+    }
+
+    public getProject(projectAddress: string): Observable<ProjectListItem> {
+        console.log("Getting project info for " + projectAddress);
+        return SmartContractFactory.getContract("SunExProject", SunExProject)
+            .mergeMap((projectContract: SunExProject) => {
+                projectContract.setAddress(projectAddress);
+                return projectContract.getProjectInfo();
+            });
+    }
+
+    public createAccount(): Observable<string> {
+        return BlockchainProxy.createAccount("password");
+    }
+
+    public fundAccount(account: string, amount: number): Observable<string> {
+        return BlockchainProxy.getCoinbase()
+            .mergeMap((coinbase: string) => {
+                return BlockchainProxy.transferFunds(coinbase, "password", account, amount);
+            });
+    };
+
+    public getBalance(account: string): Observable<number> {
+        return BlockchainProxy.getBalance(account);
+    }
+
+}
+
