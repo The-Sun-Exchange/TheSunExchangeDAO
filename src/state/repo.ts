@@ -3,7 +3,6 @@ import { Observable } from "rxjs/Rx";
 
 import Client, { CouchDoc, PostPutCopyResponse } from "davenport";
 
-
 export class Repo<ENTITY_T extends CouchDoc> {
     constructor(private databaseUri: string = "http://localhost:5984/", protected client = new Client<ENTITY_T>(databaseUri, "sun_ex_dao")) { }
 

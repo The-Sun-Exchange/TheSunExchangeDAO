@@ -16,6 +16,7 @@ import { GetProjectRoute } from "./routes/getProject";
 import { CreatePledgeRoute } from "./routes/createPledge";
 import { GetPledgesRoute } from "./routes/getPledges";
 import { GetPledgeRoute } from "./routes/getPledge";
+import { GetProjectModelsRoute } from "./routes/getProjectModels";
 
 let cors = require("cors");
 
@@ -73,6 +74,7 @@ export class Server {
         CreatePledgeRoute.create(router);
         GetPledgesRoute.create(router);
         GetPledgeRoute.create(router);
+        GetProjectModelsRoute.create(router);
 
         this.app.use(router);
     }
