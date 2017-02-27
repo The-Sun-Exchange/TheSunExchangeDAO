@@ -15,8 +15,6 @@ import { Entity } from "../state/entity";
 
 export class SunExDao extends SmartContract implements Entity {
 
-    public id: string;
-    public rev: string;
 
     constructor() {
         super("SunExDao", `

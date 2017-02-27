@@ -13,7 +13,9 @@ import { CreateAccountRoute } from "./routes/createAccount";
 import { FundAccountRoute } from "./routes/fundAccount";
 import { GetBalanceRoute } from "./routes/getBalance";
 import { GetProjectRoute } from "./routes/getProject";
-
+import { CreatePledgeRoute } from "./routes/createPledge";
+import { GetPledgesRoute } from "./routes/getPledges";
+import { GetPledgeRoute } from "./routes/getPledge";
 
 let cors = require("cors");
 
@@ -68,6 +70,9 @@ export class Server {
         FundAccountRoute.create(router);
         GetBalanceRoute.create(router);
         GetProjectRoute.create(router);
+        CreatePledgeRoute.create(router);
+        GetPledgesRoute.create(router);
+        GetPledgeRoute.create(router);
 
         this.app.use(router);
     }

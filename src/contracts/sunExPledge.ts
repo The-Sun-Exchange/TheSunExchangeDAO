@@ -1,6 +1,7 @@
 
 import { BlockchainProxy } from "../smartContractFacade/blockchainProxy";
 import { SmartContract } from "../smartContractFacade/smartContract";
+import { PledgeListItem } from "./pledgeListItem";
 
 import { Observer } from "rxjs/Observer";
 import { Observable } from "rxjs/Observable";
@@ -20,11 +21,16 @@ contract SunExPledge {
     event pledgeConverted();
 
     event fundsReceived(address receiver,uint amountRecieved);
+    event getPledgeInfoReturnEvent(address pledge, address pledger, uint pledgedAmount,uint index, uint listSize);
   
     function() payable  {
       if (msg.value > 0) {
         fundsReceived(this, msg.value);
       }
+    }
+
+    function getPledgeInfo() {
+        getPledgeInfoReturnEvent(this,pledger,pledgedAmount,0,1); 
     }
      
     function SunExPledge (address _pledger, uint _pledgedAmount) {
@@ -89,5 +95,26 @@ contract SunExPledge {
     public getPledgedAmount(): Observable<number> {
         return this.callGetter<number>("pledgerAddress");
     }
+
+    public getPledgeInfo(): Observable<PledgeListItem> {
+        return BlockchainProxy.getCoinbase()
+            .mergeMap((coinbase: string) => {
+                return super.callContractMethod(
+                    coinbase,
+                    "password",
+                    SunExPledge,
+                    "SunExPledge",
+                    "getPledgeInfo",
+                    "()",
+                    []
+                );
+            })
+            .mergeMap((returnValue: any) => {
+                console.log("Get Pledge returned: " + JSON.stringify(returnValue));
+                let listItem: PledgeListItem = returnValue;
+                return Observable.of(listItem);
+            });
+    }
+
 
 }

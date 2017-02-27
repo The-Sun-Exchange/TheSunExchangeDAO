@@ -2,9 +2,11 @@ import { Observer } from "rxjs/Observer";
 import { Observable } from "rxjs/Observable";
 import { SmartContractFactory } from "./smartContractFacade/smartContractFactory";
 import { BlockchainProxy } from "./smartContractFacade/blockchainProxy";
+import { SunExPledge } from "./contracts/sunExPledge";
 import { SunExDao } from "./contracts/sunExDao";
 import { SunExProject } from "./contracts/sunExProject";
 import { ProjectListItem } from "./contracts/projectListItem";
+import { PledgeListItem } from "./contracts/pledgeListItem";
 
 import { of } from "rxjs/observable/of";
 
@@ -82,6 +84,36 @@ export class Service {
     public getBalance(account: string): Observable<number> {
         return BlockchainProxy.getBalance(account);
     }
+
+    public createPledge(accountAddress: string, projectAddress: string, amount: number): Observable<string> {
+        return SmartContractFactory.getContract("SunExProject", SunExProject)
+            .mergeMap((projectContract: SunExProject) => {
+                projectContract.setAddress(projectAddress);
+                return projectContract.receivePledge(accountAddress, "password", amount);
+            })
+            .mergeMap((pledge: SunExPledge) => {
+                return Observable.of(pledge.getAddress());
+            });
+    }
+
+    public getPledges(projectAddress: string): Observable<PledgeListItem[]> {
+        console.log("Getting pledges for : " + projectAddress);
+        return SmartContractFactory.getContract("SunExProject", SunExProject)
+            .mergeMap((projectContract: SunExProject) => {
+                projectContract.setAddress(projectAddress);
+                return projectContract.getPledges();
+            }).toArray();
+    }
+
+    public getPledge(pledgeAddress: string): Observable<PledgeListItem> {
+        console.log("Getting Pledge info for " + pledgeAddress);
+        return SmartContractFactory.getContract("SunExPledge", SunExPledge)
+            .mergeMap((pledgeContract: SunExPledge) => {
+                pledgeContract.setAddress(pledgeAddress);
+                return pledgeContract.getPledgeInfo();
+            });
+    }
+
 
 }
 

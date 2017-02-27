@@ -145,12 +145,13 @@ contract SunExProject{
                     coinbase,
                     "password",
                     SunExProject,
-                    "SunProject",
+                    "SunExProject",
                     "getPledges",
                     "()",
                     []);
             })
             .mergeMap((returnValue: any) => {
+                console.log("SunExProject.getPledges returned: " + returnValue);
                 let listItem: PledgeListItem = returnValue;
                 return Observable.of(listItem);
             });
