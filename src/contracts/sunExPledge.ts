@@ -11,19 +11,30 @@ import { Observable } from "rxjs/Observable";
 export class SunExPledge extends SmartContract {
     constructor() {
         super("SunExPledge", `
-pragma solidity ^0.4.2;
-        
+pragma solidity ^0.4.9;
 contract SunExPledge { 
-    uint pledgedAmount; 
+    uint256 pledgedAmount; 
     address pledger;
     address sunExProject;
     event pledgeReverted();
     event pledgeConverted();
 
-    event fundsReceived(address receiver,uint amountRecieved);
-    event getPledgeInfoReturnEvent(address pledge, address pledger, uint pledgedAmount,uint index, uint listSize);
+    event fundsReceived(address receiver,uint256 amountRecieved);
+    event getPledgeInfoReturnEvent(address pledgeAddress, address pledgerAddress, uint256 pledgedAmount,uint256 index, uint256 listSize);
   
-    function() payable  {
+    function SunExPledge (address project, address _pledger, uint256 _pledgedAmount) {
+        sunExProject =  project; 
+        pledger = _pledger;
+        pledgedAmount = _pledgedAmount;
+    }
+    
+     function() payable  {
+      if (msg.value > 0) {
+        fundsReceived(this, msg.value);
+      }
+    }
+    
+    function payPledge() payable {
       if (msg.value > 0) {
         fundsReceived(this, msg.value);
       }
@@ -33,13 +44,7 @@ contract SunExPledge {
         getPledgeInfoReturnEvent(this,pledger,pledgedAmount,0,1); 
     }
      
-    function SunExPledge (address _pledger, uint _pledgedAmount) {
-        sunExProject =  msg.sender; 
-        pledger = _pledger;
-        pledgedAmount = _pledgedAmount;
-    }
-    
-    function getPledgerAddress () returns (address) {
+   function getPledgerAddress () returns (address) {
       return pledger;
     }
 
@@ -53,23 +58,22 @@ contract SunExPledge {
         } else {
              pledgeReverted();
         }
-       
     }
     
-    function getPledgedAmount() returns (uint) {
+    function getPledgedAmount() returns (uint256) {
         return pledgedAmount;
     }
-
+    
     function convert() {
-        if(!sunExProject.call.gas(800000).value(this.balance)()) {
+        uint256 gas = 800000;
+        uint256 valueToSend = this.balance ; 
+        if(!sunExProject.call.gas(gas).value(valueToSend)(bytes4(sha3("payProject()")))) {
           throw;
-        } else {
-             pledgeConverted();
-        }
+        } 
     }
-} `);
+}
+`);
     }
-
 
     private callGetter<T_PARM>(memberName: string): Observable<T_PARM> {
         return Observable.create((observer: Observer<T_PARM>) => {
@@ -115,6 +119,4 @@ contract SunExPledge {
                 return Observable.of(listItem);
             });
     }
-
-
 }

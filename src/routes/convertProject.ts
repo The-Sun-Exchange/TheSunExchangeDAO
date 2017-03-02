@@ -2,8 +2,8 @@ import { NextFunction, Request, Response, Router } from "express";
 import { BaseRoute } from "./route";
 
 import { Service } from "../service";
+import { SunExProject } from "../contracts/sunExProject";
 import { BlockchainProxy } from "../smartContractFacade/blockchainProxy";
-import { PledgeListItem } from "../contracts/pledgeListItem";
 
 const Web3: any = require("web3");
 
@@ -11,13 +11,13 @@ let web3 = new Web3();
 web3.setProvider(new web3.providers.HttpProvider("http://localhost:8545"));
 BlockchainProxy.setWeb3(web3);
 
-export class GetPledgesRoute extends BaseRoute {
+export class ConvertProjectRoute extends BaseRoute {
 
     public static create(router: Router) {
-        console.log("Creating getPledgesRoute.");
+        console.log("Creating convertProjectRoute.");
 
-        router.get("/get_pledges", (req: Request, res: Response, next: NextFunction) => {
-            new GetPledgesRoute().getPledges(req, res, next);
+        router.get("/convert_project", (req: Request, res: Response, next: NextFunction) => {
+            new ConvertProjectRoute().convertProject(req, res, next);
         });
         router.use(function (req, res, next) {
             res.header("Access-Control-Allow-Origin", "*");
@@ -31,20 +31,27 @@ export class GetPledgesRoute extends BaseRoute {
         super();
     }
 
-    public getPledges(req: Request, res: Response, next: NextFunction) {
-        if (!req.query.projectAddress) {
+    public convertProject(req: Request, res: Response, next: NextFunction) {
+
+        console.log("ConvertProjectRoute.createProject");
+
+        if (!req.query.offtakerAddress) {
+            res.json({ applicationError: "offtakerAddressparameter is required" });
+        } else if (!req.query.projectAddress) {
             res.json({ applicationError: "projectAddress parameter is required " });
         } else {
             let service = new Service();
             let results: string = "";
 
-
+            let offtakerAddress: string = req.query.offtakerAddress;
             let projectAddress: string = req.query.projectAddress;
 
+            console.log("ROUTING: convert_project projectAddress = '" + projectAddress + "' to be paid out to offtakerAddress " + offtakerAddress);
 
-            service.getPledges(projectAddress).subscribe(
-                (pledges: PledgeListItem[]) => {
-                    res.json({ pledges: pledges });
+
+            service.convertProject(projectAddress, offtakerAddress).subscribe(
+                (amountCollected: number) => {
+                    res.json({ amountCollected: amountCollected });
                 },
                 (error: any) => {
                     res.json({ applicationError: error });

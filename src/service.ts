@@ -40,6 +40,15 @@ export class Service {
     }
 
 
+    public convertProject(projectAddress: string, offtakerAddress: string): Observable<number> {
+        console.log("service.convertProject");
+        return SmartContractFactory.getContract("SunExProject", SunExProject)
+            .mergeMap((projectContract: SunExProject) => {
+                projectContract.setAddress(projectAddress);
+                return projectContract.convert(offtakerAddress);
+            });
+    }
+
     public createProject(daoAddress: string, fundingTarget: number): Observable<string> {
         console.log("service.createProject");
         return SmartContractFactory.getContract("SunExDao", SunExDao)
@@ -114,6 +123,29 @@ export class Service {
             });
     }
 
+    public transferFunds(fromAddress: string, amount: number, toAddress: string): Observable<string> {
+        console.log("Service.transferFunds: Transferring + " + amount + "ETH from " + fromAddress + " to " + toAddress);
+        return BlockchainProxy.transferFunds(fromAddress, "password", toAddress, amount);
+    }
 
+
+
+    public payForGenerated(projectAddress: string, amount: number): Observable<number> {
+        console.log("Service.payForGenerated: Paying " + amount + "ETH from project " + projectAddress);
+        return SmartContractFactory.getContract("SunExProject", SunExProject)
+            .mergeMap((projectContract: SunExProject) => {
+                projectContract.setAddress(projectAddress);
+                return projectContract.payForGenerated(amount);
+            });
+    }
+
+    public topUpProject(fromAddress: string, amount: number, toAddress: string): Observable<number> {
+        console.log("Service.topUpProject: Transferring + " + amount + "ETH from " + fromAddress + " to " + toAddress);
+        return SmartContractFactory.getContract("SunExProject", SunExProject)
+            .mergeMap((projectContract: SunExProject) => {
+                projectContract.setAddress(toAddress);
+                return projectContract.topUpProject(fromAddress, "password", amount);
+            });
+    }
 }
 

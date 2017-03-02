@@ -19,6 +19,12 @@ export class CreatePledgeRoute extends BaseRoute {
         router.get("/create_pledge", (req: Request, res: Response, next: NextFunction) => {
             new CreatePledgeRoute().createPledge(req, res, next);
         });
+        router.use(function (req, res, next) {
+            res.header("Access-Control-Allow-Origin", "*");
+            res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+            next();
+        });
+
     }
 
     constructor() {

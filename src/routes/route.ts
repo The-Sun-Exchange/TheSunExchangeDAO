@@ -36,6 +36,8 @@ export class BaseRoute {
         return this;
     }
 
+
+
     /**
      * Render a page.
      *

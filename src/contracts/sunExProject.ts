@@ -12,7 +12,8 @@ import { ProjectListItem } from "./projectListItem";
 export class SunExProject extends SmartContract {
     constructor() {
         super("SunExProject", `
-pragma solidity ^0.4.2;
+pragma solidity ^0.4.9;
+
 contract SunExProject{
   address offtaker;
   address [] pledges;
@@ -21,14 +22,42 @@ contract SunExProject{
   uint256 fundingTarget; 
   
   event receivePledgeReturnEvent(address pledge, address pledger, uint pledgedAmount);
-  event getPledgesReturnEvent(address pledge, address pledger, uint pledgedAmount,uint index, uint listSize);
-  event fundsReceived(address receiver,uint amountReceived);
-  event getProjectInfoReturnEvent(address projectAddress, uint256 nFunders , uint256 totalFunded ,uint256 fundingTarget, uint256 index, uint256 listSize);
+  event getPledgesReturnEvent(address pledgeAddress, address pledgerAddress, uint pledgedAmount,uint index, uint listSize);
+  event convertReturnEvent(uint256 balance);
   
-  function() payable  {
-      if (msg.value > 0) {
-        fundsReceived(this, msg.value);
-      }
+  event topUpProjectReturnEvent(uint256 balance);
+  
+  event getProjectInfoReturnEvent(address projectAddress, uint256 nFunders , uint256 totalFunded ,uint256 fundingTarget, uint256 index, uint256 listSize);
+  event payForGeneratedReturnEvent(uint256 newBalance);
+  
+  function() {
+  }
+  
+
+  function payProject() payable {
+  }
+
+
+  function payForGenerated(uint256 amount) {
+    uint256 totalPaid = 0;
+    
+    for (uint cPledges = 0 ; cPledges < nPledgers; ++cPledges) {
+      SunExPledge pledge = SunExPledge(pledges[cPledges]);
+
+      uint pledgedAmount = pledge.getPledgedAmount();
+
+      uint amountToPay = amount * pledgedAmount / totalPledged;
+      
+      if(!pledge.call.gas(800000).value(amountToPay)(bytes4(sha3("payPledge()")))) throw;
+
+      totalPaid += amountToPay;
+    }
+
+    payForGeneratedReturnEvent(this.balance);
+  }
+
+  function topUpProject() payable {
+     topUpProjectReturnEvent(this.balance);
   }
 
   function getProjectInfo() {
@@ -39,21 +68,27 @@ contract SunExProject{
         return fundingTarget;
   }
     
-    function revert() {
-      for (uint cPledges = 0 ; cPledges < nPledgers; ++cPledges) {
-        address pledgeAddress = pledges[cPledges];
-        SunExPledge pledge = SunExPledge(pledgeAddress);
-        pledge.revert();
-      }
+  function revert() {
+    for (uint cPledges = 0 ; cPledges < nPledgers; ++cPledges) {
+      address pledgeAddress = pledges[cPledges];
+      SunExPledge pledge = SunExPledge(pledgeAddress);
+      pledge.revert();
+    }
+  }
+    
+  function convert(address offtakerAddress) {
+    for (uint cPledges = 0 ; cPledges < nPledgers; ++cPledges) {
+      address pledgeAddress = pledges[cPledges];
+      SunExPledge pledge = SunExPledge(pledgeAddress);
+      pledge.convert();
     }
     
-    function convert() {
-      for (uint cPledges = 0 ; cPledges < nPledgers; ++cPledges) {
-        address pledgeAddress = pledges[cPledges];
-        SunExPledge pledge = SunExPledge(pledgeAddress);
-        pledge.convert();
-      }
-    }
+    uint256 projectValue = this.balance; 
+    
+    if(!offtakerAddress.send(projectValue)) throw;
+
+    convertReturnEvent(projectValue );
+  }
 
   function SunExProject (address _offtaker, uint _fundingTarget )  {
     offtaker = _offtaker;
@@ -79,24 +114,80 @@ contract SunExProject{
   function receivePledge() payable {
       if (totalPledged >= fundingTarget) throw; 
       
-      address newPledge = new SunExPledge( msg.sender, msg.value );
+      address newPledge = new SunExPledge(this, msg.sender, msg.value );
    
       pledges.push(newPledge);
       totalPledged += msg.value;
       nPledgers +=1;
       receivePledgeReturnEvent(newPledge, msg.sender, msg.value);
-      if(!newPledge.call.gas(800000).value(msg.value )()) throw;
+      if(!newPledge.call.gas(800000).value(msg.value )    (bytes4(sha3("payPledge()")))) throw;
   }
 }
+
 `
         );
 
         super.addSubContract(new SunExPledge());
     }
 
-    public convert(): Observable<SunExProject> {
-        return Observable.create((observer: Observer<SunExProject>) => {
-        });
+    public convert(offtakerAddress: string): Observable<number> {
+        console.log("converting project");
+        return BlockchainProxy.getCoinbase()
+            .mergeMap((coinbase: string) => {
+                console.log("calling project.convert");
+                return super.callContractMethod(
+                    coinbase,
+                    "password",
+                    SunExProject,
+                    "SunExProject",
+                    "convert",
+                    "(address)",
+                    [offtakerAddress])
+                    .map((returnValue: any) => {
+                        let paidOut: number = returnValue;
+                        console.log("paid out to " + offtakerAddress + " = " + paidOut);
+                        return paidOut;
+                    });
+            });
+
+    }
+
+    public payForGenerated(amount: number): Observable<number> {
+        console.log("SunExProject Paying " + amount + " for generated electricity");
+
+        return BlockchainProxy.getCoinbase()
+            .mergeMap((coinbase: string) => {
+                return super.callContractMethod(
+                    coinbase,
+                    "password",
+                    SunExProject,
+                    "SunExProject",
+                    "payForGenerated",
+                    "(uint256)",
+                    [amount])
+                    .map((returnValue: any) => {
+                        let newBalance: number = returnValue;
+                        return newBalance;
+                    });
+            });
+    }
+
+    public topUpProject(fromAddress: string, password: string, amount: number): Observable<number> {
+        console.log("SunExProject.topUpProject(" + fromAddress + "," + password + "," + amount + ")");
+
+        return super.callContractMethod(
+            fromAddress,
+            password,
+            SunExProject,
+            "SunExProject",
+            "topUpProject",
+            "()",
+            [],
+            amount).map((returnValue: any) => {
+                let newBalance: number = returnValue;
+                console.log("newBalance = " + newBalance);
+                return newBalance;
+            });
     }
 
     public getProjectInfo(): Observable<ProjectListItem> {
@@ -109,8 +200,7 @@ contract SunExProject{
                     "SunExProject",
                     "getProjectInfo",
                     "()",
-                    []
-                );
+                    [])
             })
             .mergeMap((returnValue: any) => {
                 console.log("Get project returned: " + JSON.stringify(returnValue));

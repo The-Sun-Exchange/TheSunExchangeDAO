@@ -1,6 +1,6 @@
 export class PledgeListItem {
-    pledge: string;
-    pledger: string;
+    pledgeAddress: string;
+    pledgerAddress: string;
     pledgedAmount: number;
     pledgeCurrency: string = "ETH";
     index: number;

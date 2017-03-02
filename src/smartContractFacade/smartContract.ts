@@ -56,6 +56,21 @@ export abstract class SmartContract {
         return encodedString + padding;
 
     }
+    protected encodeAddress(value: string): string {
+        let template =
+            "0000000000000000000000000000000000000000000000000000000000000000";
+        let encodedString: string = "";
+
+        let address = value.substring(2, 40);
+
+        let padding: string = template.substring(0, 64 - 20);
+
+        return padding + address;
+
+        //          1         2         3         4 
+        // 12345678901234567890123456789012345678901
+        // 1087f53ca547c8ae938683006934eadbd3e1f68a
+    }
 
     protected getInstance(address: string): any {
         return BlockchainProxy.connectContractToAddress(this, address);
@@ -141,11 +156,13 @@ export abstract class SmartContract {
 
             let rawContract = BlockchainProxy.connectContractToAddress(this, this.getAddress());
             let returnEventName: string = methodName + "ReturnEvent";
+            console.log("SmartContract returnEventName = " + returnEventName);
 
             let methodConfirmation = rawContract[returnEventName]();
 
             let resultCount = 0;
             methodConfirmation.watch((error: any, result: any) => {
+                console.log("SmartContract got return event");
                 if (!error) {
                     observer.next(result.args);
                     resultCount++;
@@ -160,6 +177,7 @@ export abstract class SmartContract {
                     }
 
                 } else {
+                    console.log("ERROR while waiting for method confirmation: \n" + error);
                     observer.error("ERROR while waiting for method confirmation: \n" + error);
                 }
             });
@@ -177,6 +195,9 @@ export abstract class SmartContract {
                             break;
                         case "uint256":
                             parmData += this.encodeUint256(parameter);
+                            break;
+                        case "address":
+                            parmData += this.encodeAddress(parameter);
                             break;
                         default:
                             observer.error("SmartContract: No encoder for " + solidityTypes[typeIndex]);
@@ -203,10 +224,18 @@ export abstract class SmartContract {
                         data: trandata
                     };
                 }
+                console.log("SmartContract sending: " + JSON.stringify(transaction));
 
-                BlockchainProxy.sendTransaction(transaction).subscribe((transactionHash: string) => {
-                    console.log("method call transaction hash =  " + transactionHash);
-                });
+                BlockchainProxy.sendTransaction(transaction)
+                    .subscribe((transactionHash: string) => {
+                        console.log("SmartContract.callContractMethod TRANSACTION_HASH:  " + transactionHash);
+                    },
+                    (error: any) => {
+                        console.log("SmartContract.callContractMethod ERROR: " + error);
+                    },
+                    () => {
+                        console.log("SmartContract.callContractMethod COMPLETED: ");
+                    });
             });
         });
 

@@ -33,6 +33,8 @@ export namespace BlockchainProxy {
         sourcePassword: string,
         destinationAddress: string,
         amount: number) {
+
+        console.log("BlockchainProxy.transferFunds: " + amount + " from " + sourceAddress + " to " + destinationAddress);
         return Observable.create((observer: Observer<string>) => {
             unlockAccount(sourceAddress, sourcePassword).subscribe(() => {
                 let transaction = {

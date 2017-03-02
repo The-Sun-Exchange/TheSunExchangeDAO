@@ -19,6 +19,12 @@ export class FundAccountRoute extends BaseRoute {
         router.get("/fund_account", (req: Request, res: Response, next: NextFunction) => {
             new FundAccountRoute().fundAccount(req, res, next);
         });
+        router.use(function (req, res, next) {
+            res.header("Access-Control-Allow-Origin", "*");
+            res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+            next();
+        });
+
     }
 
     constructor() {

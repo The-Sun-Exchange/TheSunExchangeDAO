@@ -11,6 +11,11 @@ export class AboutRoute extends BaseRoute {
         router.get("/about", (req: Request, res: Response, next: NextFunction) => {
             new AboutRoute().about(req, res, next);
         });
+        router.use(function (req, res, next) {
+            res.header("Access-Control-Allow-Origin", "*");
+            next();
+        });
+
     }
 
     constructor() {

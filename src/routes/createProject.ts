@@ -19,6 +19,12 @@ export class CreateProjectRoute extends BaseRoute {
         router.get("/create_project", (req: Request, res: Response, next: NextFunction) => {
             new CreateProjectRoute().createProject(req, res, next);
         });
+        router.use(function (req, res, next) {
+            res.header("Access-Control-Allow-Origin", "*");
+            res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+            next();
+        });
+
     }
 
     constructor() {

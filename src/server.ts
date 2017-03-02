@@ -17,6 +17,13 @@ import { CreatePledgeRoute } from "./routes/createPledge";
 import { GetPledgesRoute } from "./routes/getPledges";
 import { GetPledgeRoute } from "./routes/getPledge";
 import { GetProjectModelsRoute } from "./routes/getProjectModels";
+import { GetProjectModelRoute } from "./routes/getProjectModel";
+import { GetOfftakerModelRoute } from "./routes/getOfftakerModel";
+import { TransferFundsRoute } from "./routes/transferFunds";
+import { TopUpProjectRoute } from "./routes/topUpProject";
+import { GetPledgerModelRoute } from "./routes/getPledgerModel";
+import { ConvertProjectRoute } from "./routes/convertProject";
+import { PayForGeneratedRoute } from "./routes/payForGenerated";
 
 let cors = require("cors");
 
@@ -47,6 +54,7 @@ export class Server {
             err.status = 404;
             next(err);
         });
+        this.app.disable("etag");
 
         this.app.use(errorHandler());
     }
@@ -75,7 +83,13 @@ export class Server {
         GetPledgesRoute.create(router);
         GetPledgeRoute.create(router);
         GetProjectModelsRoute.create(router);
-
+        GetProjectModelRoute.create(router);
+        GetOfftakerModelRoute.create(router);
+        TransferFundsRoute.create(router);
+        TopUpProjectRoute.create(router);
+        GetPledgerModelRoute.create(router);
+        ConvertProjectRoute.create(router);
+        PayForGeneratedRoute.create(router);
         this.app.use(router);
     }
 }

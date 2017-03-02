@@ -18,7 +18,9 @@ export class SunExDao extends SmartContract implements Entity {
 
     constructor() {
         super("SunExDao", `
-pragma solidity ^0.4.2;
+
+pragma solidity ^0.4.9;
+
 contract SunExDao {
   address [] projects;
   uint nProjects;
@@ -31,6 +33,7 @@ contract SunExDao {
   function SunExDao() {
       nProjects = 0;
   }
+
   
   function getProjects() {
    for (uint cProjects = 0 ; cProjects < nProjects ; ++cProjects) {
@@ -57,6 +60,10 @@ contract SunExDao {
       createSunExProjectReturnEvent(projectAddress); 
   }
 }
+
+
+
+
 
 `);
 
