@@ -2,6 +2,10 @@ import { NextFunction, Request, Response, Router } from "express";
 import { BaseRoute } from "./route";
 
 import { Service } from "../service";
+import { ProjectModel } from "./projectModel";
+
+import Client, { PostPutCopyResponse, CouchDoc } from "davenport";
+import { Observable } from "rxjs/Rx";
 
 
 export class PayForGeneratedRoute extends BaseRoute {
@@ -9,7 +13,7 @@ export class PayForGeneratedRoute extends BaseRoute {
     public static create(router: Router) {
         console.log("Creating topUpProjectRoute.");
         router.get("/pay_for_generated", (req: Request, res: Response, next: NextFunction) => {
-            new PayForGeneratedRoute().topUpProject(req, res, next);
+            new PayForGeneratedRoute().payForGenerated(req, res, next);
         });
 
         router.use(function (req, res, next) {
@@ -23,8 +27,8 @@ export class PayForGeneratedRoute extends BaseRoute {
         super();
     }
 
-    public topUpProject(req: Request, res: Response, next: NextFunction) {
-        console.log("PayForGeneratedRouter.topUpProject() query = " + JSON.stringify(req.query));
+    public payForGenerated(req: Request, res: Response, next: NextFunction) {
+        console.log("PayForGeneratedRouter.payForGenerated() query = " + JSON.stringify(req.query));
 
         let service = new Service();
         let results: string = "";
@@ -37,12 +41,31 @@ export class PayForGeneratedRoute extends BaseRoute {
 
             let amount: number = req.query.amount;
             let projectAddress: string = req.query.projectAddress;
+            let newBalance: number = 0;
 
-            console.log("PayForGeneratedRouter.topUpProject() calling service");
-            service.payForGenerated(projectAddress, amount).subscribe(
-                (balance: number) => {
+            let projectClient = new Client<ProjectModel>("http://localhost:5984/", "sun_ex_dao");
+            console.log("PayForGeneratedRouter.payForGenerated() calling service");
+            service.payForGenerated(projectAddress, amount)
+                .mergeMap((balance: number) => {
                     console.log("New Project balance =  " + balance);
-                    res.json({ balance: balance });
+                    newBalance = balance;
+
+
+                    return Observable
+                        .fromPromise(projectClient.find({
+                            selector: {
+                                projectAddress: projectAddress
+                            }
+                        }));
+                })
+                .mergeMap((projectModels: ProjectModel[]) => {
+                    let projectModel: ProjectModel = projectModels[0];
+
+                    projectModel.currentCharges = projectModel.currentCharges - amount;
+
+                    return projectClient.put(projectModel._id, projectModel, projectModel._rev);
+                }).subscribe((response: PostPutCopyResponse) => {
+                    res.json({ balance: newBalance });
                 },
                 (error: any) => {
                     console.log("topUpProject ERROR:" + error);

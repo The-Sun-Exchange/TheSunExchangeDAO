@@ -16,6 +16,7 @@ export interface ProjectModel extends CouchDoc {
     rentalPerCell: number;
     numberOfCellsPledgedFor: number;
     offtakerId: string;
+    currentCharges: number;
     daoAddress: string;
 }
 
