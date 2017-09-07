@@ -32,9 +32,12 @@ describe("SunExDao", function () {
 
     it("SunExDao contract compiles cleanly", function (done: any) {
         this.timeout(15000);
-        TestSetup.createDao().subscribe((contract: SunExDao) => {
-            expect(contract.getBytecode()).to.not.be.undefined;
-        }, done, done);
+        TestSetup.createDao()
+            .subscribe((contract: SunExDao) => {
+                expect(contract.getBytecode()).to.not.be.undefined;
+            },
+            done,
+            done);
     });
 
     it("SunExDao contract deploys", function (done: any) {
